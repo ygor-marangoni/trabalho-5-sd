@@ -1,0 +1,112 @@
+import { ConsoleLogger, type Logger } from "../common/logger.js";
+import type { ProcessIdentity } from "../common/types.js";
+import { delay, sequencesAreEqual } from "../common/utils.js";
+import { GroupChatProcess } from "./GroupChatProcess.js";
+import { NetworkSimulator } from "./NetworkSimulator.js";
+
+export const DEFAULT_LATENCY_MATRIX = [
+  [0, 800, 150],
+  [250, 0, 700],
+  [600, 200, 0],
+] as const;
+
+export interface LamportSimulationResult {
+  readonly processes: readonly GroupChatProcess[];
+  readonly receptionOrdersAreDifferent: boolean;
+  readonly deliveryOrdersAreEqual: boolean;
+}
+
+export interface LamportSimulationOptions {
+  readonly logger?: Logger;
+  readonly latencyMatrix?: readonly (readonly number[])[];
+  readonly intervalMilliseconds?: number;
+}
+
+export async function runLamportSimulation(
+  options: LamportSimulationOptions = {},
+): Promise<LamportSimulationResult> {
+  const logger = options.logger ?? new ConsoleLogger();
+  const latencyMatrix = options.latencyMatrix ?? DEFAULT_LATENCY_MATRIX;
+  const interval = options.intervalMilliseconds ?? 80;
+  const network = new NetworkSimulator(latencyMatrix, logger);
+  const identities = [
+    { id: 0, name: "Ygor" },
+    { id: 1, name: "Gil" },
+    { id: 2, name: "Kensley" },
+  ] as const satisfies readonly ProcessIdentity[];
+  const processes = identities.map(
+    ({ id, name }) =>
+      new GroupChatProcess(id, name, identities.length, network, logger),
+  );
+  for (const process of processes) {
+    network.register(process);
+  }
+
+  logger.section("PARTE A — CHAT COM RELÓGIOS DE LAMPORT");
+  logger.line("P0 — Ygor | P1 — Gil | P2 — Kensley");
+  logger.line("As duas primeiras mensagens são enviadas no mesmo instante lógico.\n");
+
+  processes[0]?.sendChat("Bom dia, pessoal!");
+  processes[1]?.sendChat("Bom dia! Tudo certo?");
+  await delay(interval);
+  processes[2]?.sendChat("Vamos começar o trabalho?");
+  await delay(interval);
+  processes[0]?.sendChat("Sim, podemos começar.");
+
+  await network.waitForIdle();
+
+  const receptionOrders = processes.map((process) =>
+    process.getReceivedHistory().map((message) => message.id),
+  );
+  const deliveryOrders = processes.map((process) =>
+    process.getDeliveredHistory().map((message) => message.id),
+  );
+  const referenceDeliveryOrder = deliveryOrders[0] ?? [];
+  const deliveryOrdersAreEqual = deliveryOrders.every((order) =>
+    sequencesAreEqual(referenceDeliveryOrder, order),
+  );
+  const referenceReceptionOrder = receptionOrders[0] ?? [];
+  const receptionOrdersAreDifferent = receptionOrders.some(
+    (order) => !sequencesAreEqual(referenceReceptionOrder, order),
+  );
+
+  logger.section("RESULTADO DA PARTE A");
+  logger.line("ORDEM FÍSICA DE RECEBIMENTO");
+  processes.forEach((process, index) => {
+    logger.line(
+      `P${process.id}: ${(receptionOrders[index] ?? []).join(" -> ")}`,
+    );
+  });
+  logger.line("\nORDEM LÓGICA DE ENTREGA");
+  processes.forEach((process, index) => {
+    logger.line(
+      `P${process.id}: ${(deliveryOrders[index] ?? []).join(" -> ")}`,
+    );
+  });
+
+  logger.log("VALIDAÇÃO", [
+    receptionOrdersAreDifferent
+      ? "As ordens físicas de recebimento foram diferentes."
+      : "Aviso: as ordens físicas coincidiram neste cenário.",
+    deliveryOrdersAreEqual
+      ? "Todos os processos entregaram as mensagens na mesma ordem."
+      : "Os processos entregaram sequências diferentes.",
+  ]);
+
+  if (!deliveryOrdersAreEqual) {
+    throw new Error(
+      "Falha na ordenação total: os processos entregaram sequências diferentes.",
+    );
+  }
+  if (referenceDeliveryOrder.length !== 4) {
+    throw new Error(
+      `Falha na entrega: eram esperadas 4 mensagens, mas foram entregues ${referenceDeliveryOrder.length}.`,
+    );
+  }
+
+  return {
+    processes,
+    receptionOrdersAreDifferent,
+    deliveryOrdersAreEqual,
+  };
+}
