@@ -2,7 +2,7 @@
 
 ## O problema da ordenação distribuída
 
-Em um sistema distribuído, mensagens trafegam por caminhos com atrasos diferentes. A mensagem enviada primeiro não precisa chegar primeiro a todos os destinatários. No chat deste trabalho, P0→P2 demora 150 ms, enquanto P0→P1 demora 800 ms; outros remetentes possuem atrasos diferentes. Portanto, cada processo pode observar uma ordem física distinta.
+Em um sistema distribuído, mensagens trafegam por caminhos com atrasos diferentes. A mensagem enviada primeiro não precisa chegar primeiro a todos os destinatários. No chat deste trabalho, P0→P2 demora 150 ms, enquanto P0→P1 demora 800 ms; outros remetentes possuem atrasos diferentes. Portanto, cada processo pode observar uma ordem local de conhecimento distinta.
 
 O horário físico não resolve sozinho esse problema: relógios de máquinas podem estar dessincronizados, a precisão é limitada e a latência é variável. Além disso, esta simulação precisa representar relações lógicas, e não horários de calendário.
 
@@ -50,7 +50,7 @@ Uma entrega exige:
 - ACK de P0, P1 e P2;
 - o ID não ter sido entregue.
 
-Os ACKs demonstram que todos os participantes já conhecem a mensagem. Como os canais são FIFO, um ACK enviado por um processo não ultrapassa mensagens anteriores do mesmo canal. Essa combinação impede liberar a cabeça enquanto ainda pode existir, naquele canal, uma mensagem anterior desconhecida.
+O remetente registra sua própria confirmação localmente quando cria a mensagem. Cada processo que recebe a mensagem registra sua confirmação e envia um ACK em broadcast. Como os canais são FIFO, um ACK enviado por um processo não ultrapassa mensagens anteriores do mesmo canal. Essa combinação demonstra que todos os participantes já conhecem a mensagem e impede liberar a cabeça enquanto ainda pode existir, naquele canal, uma mensagem anterior desconhecida.
 
 O mapa de ACKs é independente da fila. Assim, um ACK de `msg-p0-001` pode ser armazenado antes de `msg-p0-001` chegar. Quando a mensagem chega, as confirmações antigas permanecem associadas.
 
@@ -58,11 +58,11 @@ O mapa de ACKs é independente da fila. Assim, um ACK de `msg-p0-001` pode ser a
 
 Há uma fila para cada direção: P0→P1 é diferente de P1→P0 e de P0→P2. Apenas um timer por canal fica ativo. Depois que o primeiro pacote é entregue, o trabalhador agenda o seguinte. Canais diferentes executam em paralelo e, por isso, destinatários distintos ainda podem observar ordens diferentes.
 
-## Recepção e entrega
+## Conhecimento local e entrega
 
-Recepção é um fato da rede: o pacote chegou. Entrega é uma decisão do protocolo: a mensagem pode ser exibida na posição correta. Uma mensagem recebida cedo pode esperar por ACKs ou por uma mensagem menor que esteja na cabeça.
+Recepção é um fato da rede: o pacote chegou. O histórico local combina mensagens criadas pelo próprio processo e mensagens recebidas pela rede. Entrega é uma decisão do protocolo: a mensagem pode ser exibida na posição correta. Uma mensagem recebida cedo pode esperar por ACKs ou por uma mensagem menor que esteja na cabeça.
 
-No resumo, os históricos físicos diferem, mas os históricos lógicos convergem para a mesma sequência. A simulação lança erro se isso não ocorrer.
+No resumo, as ordens locais de conhecimento diferem, mas as ordens lógicas convergem para a mesma sequência. A simulação lança erro se isso não ocorrer.
 
 ## Relógio Vetorial
 

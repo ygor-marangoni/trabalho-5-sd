@@ -95,6 +95,18 @@ test("uma mensagem aguarda todos os ACKs e depois é entregue", () => {
   );
 });
 
+test("rejeita mensagem com remetente físico inconsistente", () => {
+  const process = new GroupChatProcess(1, "Gil", 3, new RecordingTransport(), silentLogger);
+  const message = chat("msg-p0-001", 0, 1);
+  assert.throws(() => process.receivePacket(message, 2), /Remetente inconsistente/);
+});
+
+test("rejeita ACK com remetente físico inconsistente", () => {
+  const process = new GroupChatProcess(1, "Gil", 3, new RecordingTransport(), silentLogger);
+  const acknowledgement = ack("msg-p0-001", 2);
+  assert.throws(() => process.receivePacket(acknowledgement, 1), /Remetente inconsistente no ACK/);
+});
+
 test("ACK antecipado é preservado até a mensagem chegar", () => {
   const transport = new RecordingTransport();
   const process = new GroupChatProcess(
@@ -144,7 +156,7 @@ test("a fila bloqueia uma mensagem pronta atrás do primeiro elemento", () => {
   );
 });
 
-test("ordens físicas distintas resultam na mesma ordem lógica", () => {
+test("ordens locais distintas resultam na mesma ordem lógica", () => {
   const first = chat("msg-p0-001", 0, 1);
   const second = chat("msg-p1-001", 1, 1);
   const processes = [0, 1, 2].map(

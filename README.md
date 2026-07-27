@@ -137,7 +137,7 @@ A `HoldbackQueue` é reordenada sempre que uma mensagem é inserida. A aplicaç�
 
 ### ACKs e ACK antecipado
 
-Ao conhecer uma mensagem, cada participante registra sua confirmação e transmite um ACK em broadcast. O mapa `messageId -> Set<processId>` existe independentemente da fila. Portanto, se uma latência assimétrica fizer o ACK chegar antes da mensagem original, a confirmação fica guardada e será associada quando a mensagem chegar.
+O remetente registra sua própria confirmação localmente quando cria a mensagem e não envia um ACK separado para si mesmo. Cada processo que recebe a mensagem registra sua confirmação e envia um ACK em broadcast. Como todos os pacotes de um mesmo canal preservam FIFO, os ACKs permitem determinar quando todos os participantes já conhecem a mensagem. O mapa `messageId -> Set<processId>` existe independentemente da fila; por isso, ACKs que chegam antes da mensagem original são preservados.
 
 Uma mensagem é entregue somente se:
 
@@ -161,9 +161,9 @@ A linha é o remetente e a coluna é o destinatário. Por exemplo, P0→P1 demor
 
 Cada canal dirigido — P0→P1, P0→P2 etc. — possui sua própria fila. Um trabalhador retira apenas o primeiro pacote, agenda sua entrega com `setTimeout` e só então agenda o próximo. Assim, pacotes do mesmo remetente para o mesmo destinatário não se ultrapassam, enquanto canais diferentes avançam independentemente.
 
-### Recebimento físico versus entrega lógica
+### Ordem local de conhecimento versus entrega lógica
 
-**Receber** significa que um pacote chegou pela rede e entrou na fila. **Entregar** significa liberar a mensagem ao usuário depois de satisfazer a ordenação e os ACKs. Devido às latências, P0, P1 e P2 podem receber em sequências distintas; a fila transforma essas sequências em uma única ordem lógica.
+**Receber** significa que um pacote chegou pela rede e entrou na fila. A ordem local de conhecimento registra tanto mensagens criadas pelo próprio processo quanto mensagens recebidas pela rede. **Entregar** significa liberar a mensagem ao usuário depois de satisfazer a ordenação e os ACKs; a fila transforma as observações locais em uma única ordem lógica.
 
 ### Cenário executado
 
@@ -179,8 +179,8 @@ As duas primeiras partem praticamente juntas e recebem timestamp 1. O desempate 
 Exemplo resumido:
 
 ```text
-ORDEM FÍSICA DE RECEBIMENTO
-P0: msg-p0-001 -> msg-p1-001 -> msg-p0-002 -> msg-p2-001
+ORDEM LOCAL DE CONHECIMENTO DAS MENSAGENS
+P0: msg-p0-001 -> msg-p0-002 -> msg-p1-001 -> msg-p2-001
 P1: msg-p1-001 -> msg-p2-001 -> msg-p0-001 -> msg-p0-002
 
 ORDEM LÓGICA DE ENTREGA
@@ -189,7 +189,7 @@ P1: msg-p0-001 -> msg-p1-001 -> msg-p2-001 -> msg-p0-002
 P2: msg-p0-001 -> msg-p1-001 -> msg-p2-001 -> msg-p0-002
 ```
 
-A ordem exata dos dois últimos IDs decorre dos eventos lógicos observados; a validação usa os timestamps efetivamente gerados.
+A ordem local inclui criação e recepção; a validação usa os timestamps efetivamente gerados.
 
 ## Parte B — Relógios Vetoriais
 
@@ -252,7 +252,7 @@ npm run test
 npm run typecheck
 ```
 
-A suíte verifica relógios, desempates, fila, bloqueio sem ACK, ACK antecipado, não duplicação, FIFO, ordens físicas distintas, convergência final, incremento e merge vetorial, as quatro relações, tamanhos incompatíveis, cópias defensivas e independência dos cenários.
+A suíte verifica relógios, desempates, fila, bloqueio sem ACK, ACK antecipado, não duplicação, FIFO, ordens locais distintas, remetentes físicos e lógicos consistentes, convergência final, incremento e merge vetorial, as quatro relações, tamanhos incompatíveis, cópias defensivas e independência dos cenários.
 
 Os testes de protocolo usam transporte controlado; os testes de rede usam latências pequenas e verificam a sequência, não instantes exatos do sistema.
 

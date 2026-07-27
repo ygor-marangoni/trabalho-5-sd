@@ -13,6 +13,11 @@
 - [ ] Documentação dos algoritmos revisada
 - [ ] Divisão da equipe revisada
 - [ ] Roteiro revisado
+- [ ] A demonstração mostrou ordens locais diferentes
+- [ ] As três ordens lógicas ficaram idênticas
+- [ ] Cada processo entregou exatamente quatro mensagens
+- [ ] O exemplo do README corresponde à execução atual
+- [ ] A explicação dos ACKs corresponde à implementação
 
 ## Vídeo
 

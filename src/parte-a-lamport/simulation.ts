@@ -12,7 +12,7 @@ export const DEFAULT_LATENCY_MATRIX = [
 
 export interface LamportSimulationResult {
   readonly processes: readonly GroupChatProcess[];
-  readonly receptionOrdersAreDifferent: boolean;
+  readonly knowledgeOrdersAreDifferent: boolean;
   readonly deliveryOrdersAreEqual: boolean;
 }
 
@@ -55,7 +55,7 @@ export async function runLamportSimulation(
 
   await network.waitForIdle();
 
-  const receptionOrders = processes.map((process) =>
+  const knowledgeOrders = processes.map((process) =>
     process.getReceivedHistory().map((message) => message.id),
   );
   const deliveryOrders = processes.map((process) =>
@@ -65,16 +65,16 @@ export async function runLamportSimulation(
   const deliveryOrdersAreEqual = deliveryOrders.every((order) =>
     sequencesAreEqual(referenceDeliveryOrder, order),
   );
-  const referenceReceptionOrder = receptionOrders[0] ?? [];
-  const receptionOrdersAreDifferent = receptionOrders.some(
-    (order) => !sequencesAreEqual(referenceReceptionOrder, order),
+  const referenceKnowledgeOrder = knowledgeOrders[0] ?? [];
+  const knowledgeOrdersAreDifferent = knowledgeOrders.some(
+    (order) => !sequencesAreEqual(referenceKnowledgeOrder, order),
   );
 
   logger.section("RESULTADO DA PARTE A");
-  logger.line("ORDEM FÍSICA DE RECEBIMENTO");
+  logger.line("ORDEM LOCAL DE CONHECIMENTO DAS MENSAGENS");
   processes.forEach((process, index) => {
     logger.line(
-      `P${process.id}: ${(receptionOrders[index] ?? []).join(" -> ")}`,
+      `P${process.id}: ${(knowledgeOrders[index] ?? []).join(" -> ")}`,
     );
   });
   logger.line("\nORDEM LÓGICA DE ENTREGA");
@@ -85,9 +85,9 @@ export async function runLamportSimulation(
   });
 
   logger.log("VALIDAÇÃO", [
-    receptionOrdersAreDifferent
-      ? "As ordens físicas de recebimento foram diferentes."
-      : "Aviso: as ordens físicas coincidiram neste cenário.",
+    knowledgeOrdersAreDifferent
+      ? "As ordens locais de conhecimento foram diferentes."
+      : "Aviso: as ordens locais de conhecimento coincidiram neste cenário.",
     deliveryOrdersAreEqual
       ? "Todos os processos entregaram as mensagens na mesma ordem."
       : "Os processos entregaram sequências diferentes.",
@@ -98,6 +98,11 @@ export async function runLamportSimulation(
       "Falha na ordenação total: os processos entregaram sequências diferentes.",
     );
   }
+  if (options.latencyMatrix === undefined && !knowledgeOrdersAreDifferent) {
+    throw new Error(
+      "O cenário não demonstrou ordens locais de conhecimento diferentes.",
+    );
+  }
   if (referenceDeliveryOrder.length !== 4) {
     throw new Error(
       `Falha na entrega: eram esperadas 4 mensagens, mas foram entregues ${referenceDeliveryOrder.length}.`,
@@ -106,7 +111,7 @@ export async function runLamportSimulation(
 
   return {
     processes,
-    receptionOrdersAreDifferent,
+    knowledgeOrdersAreDifferent,
     deliveryOrdersAreEqual,
   };
 }

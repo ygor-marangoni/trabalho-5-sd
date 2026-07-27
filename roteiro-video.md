@@ -40,7 +40,7 @@ Fala sugerida:
 
 > “Em um envio incrementamos o contador. No recebimento usamos o máximo entre o valor local e o recebido, mais um. Como eventos concorrentes podem empatar, ordenamos por timestamp, ID do remetente e ID da mensagem.”
 
-> “Receber não é entregar. Receber significa colocar a mensagem na fila. Ela só é entregue se estiver na cabeça e tiver ACK dos três processos. ACKs que chegam antes da mensagem ficam guardados.”
+> “Receber não é entregar. A mensagem entra na fila e só é entregue se estiver na cabeça e tiver ACK dos três processos. O remetente registra sua própria confirmação ao criar a mensagem; os outros processos enviam ACK quando recebem a mensagem. ACKs antecipados ficam guardados.”
 
 > “A rede usa uma matriz assimétrica e uma fila independente para cada canal dirigido. Isso preserva FIFO no mesmo canal, mas permite que processos diferentes recebam em ordens distintas.”
 
@@ -52,7 +52,7 @@ npm run parte-a
 
 Apontar brevemente `[RECEBIMENTO]`, `[ACK]`, `[AGUARDANDO]`, `[ENTREGA]` e o resumo:
 
-> “Aqui as ordens físicas são diferentes. Mesmo assim, a validação confirma exatamente a mesma ordem lógica nos três processos.”
+> “A primeira sequência mostra a ordem em que cada processo passou a conhecer as mensagens, seja por criação local ou recepção pela rede. Como as latências são diferentes, essas ordens não coincidem. A segunda sequência mostra a ordem lógica de entrega, que é igual nos três processos.”
 
 ## 02:25–03:45 — Parte B
 

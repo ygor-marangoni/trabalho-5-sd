@@ -91,6 +91,17 @@ export class GroupChatProcess implements PacketReceiver {
       throw new Error(`Remetente físico P${physicalSenderId} inválido.`);
     }
 
+    if (packet.type === "CHAT_MESSAGE" && packet.senderId !== physicalSenderId) {
+      throw new Error(
+        `Remetente inconsistente: o pacote declara P${packet.senderId}, mas foi transmitido por P${physicalSenderId}.`,
+      );
+    }
+    if (packet.type === "ACK" && packet.senderId !== physicalSenderId) {
+      throw new Error(
+        `Remetente inconsistente no ACK: o pacote declara P${packet.senderId}, mas foi transmitido por P${physicalSenderId}.`,
+      );
+    }
+
     if (packet.type === "CHAT_MESSAGE") {
       this.receiveChatMessage(packet);
     } else {
