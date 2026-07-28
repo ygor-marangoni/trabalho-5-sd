@@ -27,7 +27,9 @@ export async function runLamportSimulation(
 ): Promise<LamportSimulationResult> {
   const logger = options.logger ?? new ConsoleLogger();
   const latencyMatrix = options.latencyMatrix ?? DEFAULT_LATENCY_MATRIX;
-  const interval = options.intervalMilliseconds ?? 80;
+  // P2 fala apenas depois de receber o ACK de P0 para a mensagem de P1.
+  // Com a matriz padrão, esse ACK chega em P2 após 400 ms (250 + 150 ms).
+  const interval = options.intervalMilliseconds ?? 450;
   const network = new NetworkSimulator(latencyMatrix, logger);
   const identities = [
     { id: 0, name: "Ygor" },

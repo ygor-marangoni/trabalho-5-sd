@@ -20,6 +20,7 @@ export interface Logger {
 const compactCategories = new Set<LogCategory>([
   "EVENTO",
   "ACK",
+  "ACK_RECEBIDO",
   "ENTREGA",
   "VALIDAÇÃO",
 ]);

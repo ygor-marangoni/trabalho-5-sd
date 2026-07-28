@@ -113,12 +113,3 @@ Essa comparação é feita posição por posição. Soma, média ou valor máxim
 ## Imutabilidade
 
 Eventos e mensagens vetoriais recebem cópias congeladas. Métodos de consulta também retornam cópias. Portanto, incrementar o relógio depois não modifica eventos anteriores e alterar um array recebido externamente não altera o processo.
-
-## Limitações
-
-- Lamport preserva `happened-before`, mas o timestamp sozinho não prova causalidade nem concorrência;
-- o protocolo usa grupo fixo e exige confirmação de todos;
-- não são tratados perda, duplicação real da rede, partição ou falha de processo;
-- canais FIFO são uma propriedade da simulação, não uma garantia de toda rede real;
-- vetores crescem linearmente com o número de processos;
-- objetos e timers representam processos e rede apenas para fins didáticos.

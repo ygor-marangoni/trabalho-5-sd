@@ -168,6 +168,12 @@ Cada canal dirigido — P0→P1, P0→P2 etc. — possui sua própria fila. Um t
 
 ### Cenário executado
 
+P0 e P1 iniciam a conversa no mesmo instante lógico. Antes de P2 enviar sua
+primeira mensagem, a simulação aguarda 450 ms: com a matriz de latências padrão,
+P2 já recebeu o ACK que P0 envia para a mensagem de P1 (250 ms de P1→P0 e
+150 ms de P0→P2). Assim, o log mostra explicitamente um ACK chegando em P2
+antes de ela falar.
+
 As mensagens são:
 
 1. Ygor: “Bom dia, pessoal!”
@@ -181,16 +187,17 @@ Exemplo resumido:
 
 ```text
 ORDEM LOCAL DE CONHECIMENTO DAS MENSAGENS
-P0: msg-p0-001 -> msg-p0-002 -> msg-p1-001 -> msg-p2-001
+P0: msg-p0-001 -> msg-p1-001 -> msg-p0-002 -> msg-p2-001
 P1: msg-p1-001 -> msg-p2-001 -> msg-p0-001 -> msg-p0-002
+P2: msg-p0-001 -> msg-p2-001 -> msg-p1-001 -> msg-p0-002
 
 ORDEM LÓGICA DE ENTREGA
-P0: msg-p0-001 -> msg-p1-001 -> msg-p2-001 -> msg-p0-002
-P1: msg-p0-001 -> msg-p1-001 -> msg-p2-001 -> msg-p0-002
-P2: msg-p0-001 -> msg-p1-001 -> msg-p2-001 -> msg-p0-002
+P0: msg-p0-001 -> msg-p1-001 -> msg-p0-002 -> msg-p2-001
+P1: msg-p0-001 -> msg-p1-001 -> msg-p0-002 -> msg-p2-001
+P2: msg-p0-001 -> msg-p1-001 -> msg-p0-002 -> msg-p2-001
 ```
 
-A ordem local inclui criação e recepção; a validação usa os timestamps efetivamente gerados.
+A ordem local inclui criação e recepção; a validação usa os timestamps efetivamente gerados. Neste cenário, `msg-p0-002` e `msg-p2-001` têm timestamp 5, então o desempate pelo remetente coloca P0 antes de P2.
 
 ## Parte B — Relógios Vetoriais
 
