@@ -6,6 +6,7 @@ export type LogCategory =
   | "RELÓGIO"
   | "FILA"
   | "ACK"
+  | "ACK_RECEBIDO"
   | "AGUARDANDO"
   | "ENTREGA"
   | "VALIDAÇÃO";
@@ -16,11 +17,21 @@ export interface Logger {
   line(text?: string): void;
 }
 
+const compactCategories = new Set<LogCategory>([
+  "EVENTO",
+  "ACK",
+  "ENTREGA",
+  "VALIDAÇÃO",
+]);
+
 export class ConsoleLogger implements Logger {
-  public constructor(private readonly enabled = true) {}
+  public constructor(
+    private readonly enabled = true,
+    private readonly verbose = false,
+  ) {}
 
   public log(category: LogCategory, lines: readonly string[]): void {
-    if (!this.enabled) {
+    if (!this.enabled || (!this.verbose && !compactCategories.has(category))) {
       return;
     }
 

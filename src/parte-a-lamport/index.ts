@@ -1,3 +1,5 @@
+import { ConsoleLogger } from "../common/logger.js";
 import { runLamportSimulation } from "./simulation.js";
 
-await runLamportSimulation();
+const verbose = process.argv.includes("--verbose");
+await runLamportSimulation({ logger: new ConsoleLogger(true, verbose) });

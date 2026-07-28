@@ -69,6 +69,20 @@ export async function runLamportSimulation(
   const knowledgeOrdersAreDifferent = knowledgeOrders.some(
     (order) => !sequencesAreEqual(referenceKnowledgeOrder, order),
   );
+  const allMessagesAcknowledged = processes.every((process) =>
+    process
+      .getDeliveredHistory()
+      .every(
+        (message) =>
+          process.getAcknowledgements(message.id).length === identities.length,
+      ),
+  );
+  const pendingMessageCounts = processes.map(
+    (process) => process.getPendingMessages().length,
+  );
+  const holdbackQueuesAreEmpty = pendingMessageCounts.every(
+    (count) => count === 0,
+  );
 
   logger.section("RESULTADO DA PARTE A");
   logger.line("ORDEM LOCAL DE CONHECIMENTO DAS MENSAGENS");
@@ -91,6 +105,14 @@ export async function runLamportSimulation(
     deliveryOrdersAreEqual
       ? "Todos os processos entregaram as mensagens na mesma ordem."
       : "Os processos entregaram sequências diferentes.",
+    allMessagesAcknowledged
+      ? "ACKs: cada mensagem entregue foi confirmada por P0, P1 e P2."
+      : "Falha: existe mensagem entregue sem todos os ACKs.",
+    `Filas pendentes: ${processes
+      .map(
+        (process, index) => `P${process.id}=${pendingMessageCounts[index] ?? 0}`,
+      )
+      .join(" | ")}.`,
   ]);
 
   if (!deliveryOrdersAreEqual) {
@@ -107,6 +129,14 @@ export async function runLamportSimulation(
     throw new Error(
       `Falha na entrega: eram esperadas 4 mensagens, mas foram entregues ${referenceDeliveryOrder.length}.`,
     );
+  }
+  if (!allMessagesAcknowledged) {
+    throw new Error(
+      "Falha nos ACKs: uma mensagem foi entregue sem confirmação de todos os processos.",
+    );
+  }
+  if (!holdbackQueuesAreEmpty) {
+    throw new Error("Falha na fila: existem mensagens pendentes após a simulação.");
   }
 
   return {

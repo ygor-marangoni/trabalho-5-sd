@@ -6,6 +6,7 @@
   "type": "module",
   "scripts": {
     "parte-a": "tsx src/parte-a-lamport/index.ts",
+    "parte-a:verbose": "tsx src/parte-a-lamport/index.ts --verbose",
     "parte-b": "tsx src/parte-b-vetorial/index.ts",
     "demo": "tsx src/index.ts",
     "test": "tsx --test tests/*.test.ts",

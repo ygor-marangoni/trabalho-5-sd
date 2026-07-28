@@ -183,7 +183,7 @@ export class GroupChatProcess implements PacketReceiver {
       acknowledgement.messageId,
       acknowledgement.senderId,
     );
-    this.logger.log("ACK", [
+    this.logger.log("ACK_RECEBIDO", [
       `Processo: P${this.id} — ${this.name}`,
       `ACK de P${acknowledgement.senderId} para ${acknowledgement.messageId}`,
       `Relógio: ${previousClock} -> ${updatedClock}`,

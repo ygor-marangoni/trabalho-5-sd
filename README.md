@@ -85,6 +85,7 @@ npm install
 
 ```bash
 npm run parte-a    # somente chat com Lamport
+npm run parte-a:verbose # Parte A com detalhes de rede, ACKs, filas e relÃ³gios
 npm run parte-b    # somente relógios vetoriais
 npm run demo       # Parte A e Parte B em sequência
 npm run test       # todos os testes
